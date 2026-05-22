@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WOVN logo animation</title>
+  <title>Weave logo animation</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -349,11 +349,11 @@
     const COL_COLOURS = COL_BASE_COLOURS.map((rgb) => rgbToCss(rgb));
     const ROW_DELAYS = Array.from({ length: COUNT }, (_, j) => j * STAGGER);
     const COL_DELAYS = Array.from({ length: COUNT }, (_, i) => i * STAGGER);
-    const ROW_DELAYS_STORAGE_KEY = 'wovn.index3.rowDelays';
-    const COL_DELAYS_STORAGE_KEY = 'wovn.index3.colDelays';
-    const ROW_COLOURS_STORAGE_KEY = 'wovn.index3.rowColours';
-    const COL_COLOURS_STORAGE_KEY = 'wovn.index3.colColours';
-    const FADE_DELAY_STORAGE_KEY = 'wovn.index3.fadeDelay';
+    const ROW_DELAYS_STORAGE_KEY = 'vibe.index3.rowDelays';
+    const COL_DELAYS_STORAGE_KEY = 'vibe.index3.colDelays';
+    const ROW_COLOURS_STORAGE_KEY = 'vibe.index3.rowColours';
+    const COL_COLOURS_STORAGE_KEY = 'vibe.index3.colColours';
+    const FADE_DELAY_STORAGE_KEY = 'vibe.index3.fadeDelay';
     const SHARE_STATE_QUERY_KEY = 'state';
     const rowDelayInputs = Array.from({ length: COUNT }, (_, j) =>
       document.getElementById(`rowNum${j + 1}`)
