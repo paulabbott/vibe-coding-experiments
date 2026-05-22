@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WOVN logo animation</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      gap: 12px;
+    }
+    .canvas-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    canvas {
+      border: 1px solid #999;
+      display: block;
+    }
+    canvas { cursor: pointer; }
+    #recordBtn {
+      padding: 8px 20px;
+      font-size: 14px;
+      border: 1px solid #999;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+    }
+    #recordBtn.recording {
+      background: #CC0000;
+      color: #fff;
+      border-color: #CC0000;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas-wrap">
+    <canvas id="c" width="350" height="350"></canvas>
+  </div>
+  <button id="recordBtn">⏺ Record</button>
+  <script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+    const STRIP_W = 20;
+    const GAP = 0;
+    const DURATION = 1800;
+    const STAGGER = 240;
+    const MARGIN = 30;
+    const ENABLE_END_FADE = false;
+    const H_OFFSET_BASE = 0;
+    const V_OFFSET_BASE = 0;
+
+    // Base colours as RGB for tweening
+    const BASE_COLOURS = {
+      0: [0,   0,   0  ], // black — never fades
+      1: [221, 176, 25 ], // #ddb019 golden yellow
+      2: [224, 88,  48 ], // #e05830 burnt orange
+      3: [223, 227, 114], // #dfe372 lime yellow
+      4: [128, 155, 222], // #809bde cornflower blue
+      5: [188, 179, 88 ], // #bcb358 olive gold
+      6: [228, 76,  0  ], // #e44c00 deep orange
+      7: [112, 132, 253], // #7084fd periwinkle blue
+      8: [112, 132, 253], // reuse periwinkle for index 8
+    };
+
+    // Live colour map — updated during fade
+    const COLOURS = Object.fromEntries(
+      Object.entries(BASE_COLOURS).map(([k, [r,g,b]]) => [k, `rgb(${r},${g},${b})`])
+    );
+
+    function lerp(a, b, t) { return Math.round(a + (b - a) * t); }
+
+    const FADE_DURATION = 2000;
+    let fadeStart = null;
+
+    function fade(ts) {
+      if (!fadeStart) fadeStart = ts;
+      const t = Math.min((ts - fadeStart) / FADE_DURATION, 1);
+      const eased = 1 - Math.pow(1 - t, 3); // ease in cubic
+
+      for (const [k, [r,g,b]] of Object.entries(BASE_COLOURS)) {
+        if (Number(k) === 0) continue; // keep black
+        COLOURS[k] = `rgb(${lerp(r,255,eased)},${lerp(g,255,eased)},${lerp(b,255,eased)})`;
+      }
+
+      // Redraw with updated colours
+      drawStatic();
+
+      if (t < 1) rafId = requestAnimationFrame(fade);
+    }
+
+    function drawStatic() {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, W, H);
+      for (let j = 0; j < COUNT; j++) {
+        const seq = ROWS[ROWS.length - 1 - j];
+        let sx = pinkStrips[j].x;
+        for (let s = 0; s < seq.length; s++) {
+          ctx.fillStyle = COLOURS[seq[s]];
+          ctx.fillRect(sx, pinkStrips[j].y, STRIP_W, STRIP_W);
+          sx += STRIP_W;
+        }
+      }
+      for (let i = 0; i < COUNT; i++) {
+        let sy = H_STRIP_Y;
+        for (let s = 0; s < COLS.length; s++) {
+          ctx.fillStyle = COLOURS[COLS[s][i]];
+          ctx.fillRect(hStrips[i].x, sy, STRIP_W, STRIP_W);
+          sy += STRIP_W;
+        }
+      }
+      for (let i = 0; i < COUNT; i++) {
+        for (let j = 0; j < COUNT; j++) {
+          const overlapping =
+            hStrips[i].x >= pinkStrips[j].x &&
+            hStrips[i].x <= pinkStrips[j].x + PINK_W &&
+            pinkStrips[j].y >= H_STRIP_Y &&
+            pinkStrips[j].y <= H_STRIP_Y + H_STRIP_H;
+          if (!overlapping) continue;
+          if ((i + j) % 2 === 1) {
+            const seq = ROWS[ROWS.length - 1 - j];
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(hStrips[i].x, pinkStrips[j].y, STRIP_W, STRIP_W);
+            ctx.clip();
+            let sx = pinkStrips[j].x;
+            for (let s = 0; s < seq.length; s++) {
+              ctx.fillStyle = COLOURS[seq[s]];
+              ctx.fillRect(sx, pinkStrips[j].y, STRIP_W, STRIP_W);
+              sx += STRIP_W;
+            }
+            ctx.restore();
+          } else {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(hStrips[i].x, pinkStrips[j].y, STRIP_W, STRIP_W);
+            ctx.clip();
+            let sy = H_STRIP_Y;
+            for (let s = 0; s < COLS.length; s++) {
+              ctx.fillStyle = COLOURS[COLS[s][i]];
+              ctx.fillRect(hStrips[i].x, sy, STRIP_W, STRIP_W);
+              sy += STRIP_W;
+            }
+            ctx.restore();
+          }
+        }
+      }
+    }
+
+    const GREYS = {
+      1: '#222222',
+      2: '#555555',
+      3: '#888888',
+      4: '#bbbbbb'
+    };
+    const REDS = {
+      0: '#000000', // black
+      1: '#CC0000', // dark red
+      2: '#FF7F00', // orange
+      4: '#FFAAAA'  // light red
+    };
+    const BLUES = {
+      0: '#000000', // black
+      1: '#0000CC', // dark blue
+      2: '#FFFF00', // yellow
+      4: '#AAAAFF'  // light blue
+    };
+    const COLS = [
+      [2,1,2,1,2,1,2,1], // row 0      
+      [2,1,2,1,2,1,2,1], // row 0
+      [2,0,0,1,2,1,0,1], // row 1
+      [2,1,0,1,0,1,0,1], // row 2
+      [2,1,0,0,0,1,0,1], // row 3
+      [2,1,2,0,2,0,2,1], // row 4
+      [2,1,2,1,2,1,2,1], // row 5
+      [2,1,2,1,2,1,2,1], // row 0      
+    ];
+
+    const ROWS = [
+      [4,4,4,4,4,4,4,4], // row 0
+      [3,3,3,3,3,3,3,3], // row 1
+      [4,0,0,4,4,4,0,4], // row 2
+      [3,3,0,3,0,3,0,3], // row 3
+      [4,4,0,0,0,4,0,4], // row 4
+      [3,3,3,0,3,0,3,3], // row 5
+      [4,4,4,4,4,4,4,4], // row 6
+      [3,3,3,3,3,3,3,3], // row 7      
+    ];
+    const COUNT = Math.min(
+      ROWS.length,
+      ...COLS.map((row) => row.length)
+    );
+    // Arrow key offsets — single source of truth for strip positions
+    let hOffset = H_OFFSET_BASE;
+    let vOffset = V_OFFSET_BASE;
+
+    // Grey strips — vertical bars sliding in from right
+    const hStrips = Array.from({ length: COUNT }, (_, i) => ({
+      target: MARGIN + hOffset + i * (STRIP_W + GAP),
+      x: W + STRIP_W
+    }));
+    const H_STRIP_H = H - MARGIN * 2;
+    const H_STRIP_Y = MARGIN;
+
+    // Pink strips — horizontal bars at fixed y, sliding in from left
+    // Align horizontal strip stack to the same strip grid as vertical strips.
+    const PINK_BASE_TARGET = MARGIN + (COUNT - 1) * (STRIP_W + GAP);
+    const pinkStrips = Array.from({ length: COUNT }, (_, i) => ({
+      targetX: MARGIN,
+      y: PINK_BASE_TARGET + vOffset - i * (STRIP_W + GAP),
+      x: -(W + STRIP_W)
+    }));
+    const PINK_W = W - MARGIN * 2;
+
+    let rafId = null;
+    let animStart = null;
+
+    function easeOutExpo(t) {
+      return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+    }
+
+    function draw(ts) {
+      if (!animStart) animStart = ts;
+      const elapsed = ts - animStart;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, W, H);
+
+      // 1. Draw horizontal strips (bottom layer) — slide in from left
+      for (let j = 0; j < COUNT; j++) {
+        const e = elapsed - j * STAGGER;
+        pinkStrips[j].x = e <= 0
+          ? -(W + STRIP_W)
+          : -(W + STRIP_W) + (pinkStrips[j].targetX + (W + STRIP_W)) * easeOutExpo(Math.min(e / DURATION, 1));
+
+        const seq = ROWS[ROWS.length - 1 - j];
+        let sx = pinkStrips[j].x;
+        for (let s = 0; s < seq.length; s++) {
+          ctx.fillStyle = COLOURS[seq[s]];
+          ctx.fillRect(sx, pinkStrips[j].y, STRIP_W, STRIP_W);
+          sx += STRIP_W;
+        }
+      }
+
+      // 2. Draw vertical strips on top
+      for (let i = 0; i < COUNT; i++) {
+        const e = elapsed - i * STAGGER;
+        hStrips[i].x = e <= 0
+          ? W + STRIP_W
+          : W + STRIP_W + (hStrips[i].target - (W + STRIP_W)) * easeOutExpo(Math.min(e / DURATION, 1));
+        let sy = H_STRIP_Y;
+        for (let s = 0; s < COLS.length; s++) {
+          ctx.fillStyle = COLOURS[COLS[s][i]];
+          ctx.fillRect(hStrips[i].x, sy, STRIP_W, STRIP_W);
+          sy += STRIP_W;
+        }
+      }
+
+      // 3. Repaint intersections for weave effect
+      for (let i = 0; i < COUNT; i++) {
+        for (let j = 0; j < COUNT; j++) {
+          const overlapping =
+            hStrips[i].x >= pinkStrips[j].x &&
+            hStrips[i].x <= pinkStrips[j].x + PINK_W &&
+            pinkStrips[j].y >= H_STRIP_Y &&
+            pinkStrips[j].y <= H_STRIP_Y + H_STRIP_H;
+
+          if (!overlapping) continue;
+
+          if ((i + j) % 2 === 1) {
+            // H over V — redraw horizontal strip's pattern
+            const seq = ROWS[ROWS.length - 1 - j];
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(hStrips[i].x, pinkStrips[j].y, STRIP_W, STRIP_W);
+            ctx.clip();
+            let sx = pinkStrips[j].x;
+            for (let s = 0; s < seq.length; s++) {
+              ctx.fillStyle = COLOURS[seq[s]];
+              ctx.fillRect(sx, pinkStrips[j].y, STRIP_W, STRIP_W);
+              sx += STRIP_W;
+            }
+            ctx.restore();
+          } else {
+            // V over H — redraw vertical strip's pattern
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(hStrips[i].x, pinkStrips[j].y, STRIP_W, STRIP_W);
+            ctx.clip();
+            let sy = H_STRIP_Y;
+            for (let s = 0; s < COLS.length; s++) {
+              ctx.fillStyle = COLOURS[COLS[s][i]];
+              ctx.fillRect(hStrips[i].x, sy, STRIP_W, STRIP_W);
+              sy += STRIP_W;
+            }
+            ctx.restore();
+          }
+        }
+      }
+
+      const totalDuration = DURATION + (COUNT - 1) * STAGGER;
+      if (elapsed < totalDuration) {
+        rafId = requestAnimationFrame(draw);
+      } else {
+        if (ENABLE_END_FADE) {
+          fadeStart = null;
+          rafId = requestAnimationFrame(fade);
+        } else {
+          rafId = null;
+        }
+      }
+    }
+
+    function replay() {
+      if (rafId) cancelAnimationFrame(rafId);
+      animStart = null;
+      fadeStart = null;
+      // Reset colours to base
+      for (const [k, [r,g,b]] of Object.entries(BASE_COLOURS)) {
+        COLOURS[k] = `rgb(${r},${g},${b})`;
+      }
+      for (const s of hStrips) s.x = W + STRIP_W;
+      for (const s of pinkStrips) s.x = -(W + STRIP_W);
+      rafId = requestAnimationFrame(draw);
+    }
+
+    canvas.addEventListener('click', replay);
+
+    // Arrow keys adjust strip positions in real time
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft')  hOffset -= 1;
+      if (e.key === 'ArrowRight') hOffset += 1;
+      if (e.key === 'ArrowUp')    vOffset -= 1;
+      if (e.key === 'ArrowDown')  vOffset += 1;
+      if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) {
+        e.preventDefault();
+        for (let i = 0; i < COUNT; i++) {
+          hStrips[i].target = MARGIN + hOffset + i * (STRIP_W + GAP);
+          pinkStrips[i].y = PINK_BASE_TARGET + vOffset - i * (STRIP_W + GAP);
+        }
+        console.log('hOffset:', hOffset, 'vOffset:', vOffset);
+      }
+    });
+
+    replay();
+
+    // --- MediaRecorder ---
+    const recordBtn = document.getElementById('recordBtn');
+    let mediaRecorder = null;
+    let recordedChunks = [];
+
+    recordBtn.addEventListener('click', () => {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      } else {
+        recordedChunks = [];
+        const stream = canvas.captureStream(60);
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'animation.webm';
+          a.click();
+          URL.revokeObjectURL(url);
+          recordBtn.textContent = '⏺ Record';
+          recordBtn.classList.remove('recording');
+        };
+        mediaRecorder.start();
+        recordBtn.textContent = '⏹ Stop & Save';
+        recordBtn.classList.add('recording');
+      }
+    });
+  </script>
+</body>
+</html>

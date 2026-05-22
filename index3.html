@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WOVN logo animation</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .layout {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+    }
+    .left-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .canvas-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    .controls-panel {
+      width: 440px;
+      height: 440px;
+      border: 1px solid #999;
+      background: #fff;
+      padding: 12px;
+      font-size: 14px;
+    }
+    .matrix-preview {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .matrix-col {
+      display: grid;
+      grid-template-rows: repeat(8, auto);
+      gap: 6px;
+    }
+    .matrix-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 36px;
+    }
+    .matrix-item input[type="color"] {
+      width: 54px;
+      height: 36px;
+      padding: 0;
+      border: 1px solid #999;
+      background: #fff;
+      cursor: pointer;
+    }
+    .matrix-item input[type="number"] {
+      width: 81px;
+      height: 30px;
+      padding: 3px 6px;
+      border: 1px solid #999;
+      font-size: 14px;
+      text-align: center;
+    }
+    .control-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 36px;
+      font-size: 14px;
+    }
+    .preview-link {
+      display: inline-block;
+      margin-top: 10px;
+      font-size: 14px;
+      word-break: break-all;
+    }
+    .control-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+    canvas {
+      border: 1px solid #999;
+      display: block;
+    }
+    canvas { cursor: pointer; }
+    #recordBtn {
+      padding: 8px 20px;
+      font-size: 14px;
+      border: 1px solid #999;
+      border-radius: 4px;
+      background: #fff;
+      cursor: pointer;
+    }
+    #recordBtn.recording {
+      background: #CC0000;
+      color: #fff;
+      border-color: #CC0000;
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <div class="left-panel">
+      <div class="canvas-wrap">
+        <canvas id="c" width="220" height="220"></canvas>
+      </div>
+      <button id="recordBtn">⏺ Record</button>
+    </div>
+    <div class="controls-panel">
+      <div class="matrix-preview">
+        <div class="matrix-col">
+          <label class="matrix-item">row1 <input id="rowColor1" type="color" value="#ddb019" /><input id="rowNum1" type="number" min="0" step="10" value="0" /></label>
+          <label class="matrix-item">row2 <input id="rowColor2" type="color" value="#e05830" /><input id="rowNum2" type="number" min="0" step="10" value="0" /></label>
+          <label class="matrix-item">row3 <input id="rowColor3" type="color" value="#dfe372" /><input id="rowNum3" type="number" min="0" step="10" value="0" /></label>
+          <label class="matrix-item">row4 <input id="rowColor4" type="color" value="#809bde" /><input id="rowNum4" type="number" min="0" step="10" value="0" /></label>
+          <label class="matrix-item">row5 <input id="rowColor5" type="color" value="#00ff00" /><input id="rowNum5" type="number" min="0" step="10" value="0" /></label>
+          <label class="matrix-item">row6 <input id="rowColor6" type="color" value="#e44c00" /><input id="rowNum6" type="number" min="0" step="10" value="0" /></label>
+          <label class="matrix-item">row7 <input id="rowColor7" type="color" value="#7084fd" /><input id="rowNum7" type="number" min="0" step="10" value="0" /></label>
+          <label class="matrix-item">row8 <input id="rowColor8" type="color" value="#7084fd" /><input id="rowNum8" type="number" min="0" step="10" value="0" /></label>
+        </div>
+        <div class="matrix-col">
+          <label class="matrix-item">col1 <input id="colColor1" type="color" value="#ddb019" /><input id="colNum1" type="number" min="0" step="10" value="1" /></label>
+          <label class="matrix-item">col2 <input id="colColor2" type="color" value="#e05830" /><input id="colNum2" type="number" min="0" step="10" value="2" /></label>
+          <label class="matrix-item">col3 <input id="colColor3" type="color" value="#dfe372" /><input id="colNum3" type="number" min="0" step="10" value="3" /></label>
+          <label class="matrix-item">col4 <input id="colColor4" type="color" value="#809bde" /><input id="colNum4" type="number" min="0" step="10" value="4" /></label>
+          <label class="matrix-item">col5 <input id="colColor5" type="color" value="#00ff00" /><input id="colNum5" type="number" min="0" step="10" value="5" /></label>
+          <label class="matrix-item">col6 <input id="colColor6" type="color" value="#e44c00" /><input id="colNum6" type="number" min="0" step="10" value="6" /></label>
+          <label class="matrix-item">col7 <input id="colColor7" type="color" value="#7084fd" /><input id="colNum7" type="number" min="0" step="10" value="7" /></label>
+          <label class="matrix-item">col8 <input id="colColor8" type="color" value="#7084fd" /><input id="colNum8" type="number" min="0" step="10" value="8" /></label>
+        </div>
+      </div>
+      <label class="control-item">
+        <input id="fadeToggle" type="checkbox" checked />
+        <span>Fade to white</span>
+        <input id="fadeDelay" type="number" min="0" step="10" value="0" />
+      </label>
+      <a id="previewLink" class="preview-link" href="#" target="_blank" rel="noopener noreferrer">Preview link</a>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('c');
+    const fadeToggle = document.getElementById('fadeToggle');
+    const fadeDelayInput = document.getElementById('fadeDelay');
+    const previewLink = document.getElementById('previewLink');
+    const rowColorInputs = Array.from({ length: 8 }, (_, i) =>
+      document.getElementById(`rowColor${i + 1}`)
+    );
+    const colColorInputs = Array.from({ length: 8 }, (_, i) =>
+      document.getElementById(`colColor${i + 1}`)
+    );
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+    const STRIP_W = 20;
+    const GAP = 0;
+    const DURATION = 1800;
+    const STAGGER = 240;
+    const MARGIN = 30;
+    let ENABLE_END_FADE = true;
+    const H_OFFSET_BASE = 0;
+    const V_OFFSET_BASE = 0;
+
+    // Base colours as RGB for tweening
+    const BASE_COLOURS = {
+      0: [0,   0,   0  ], // black — never fades
+      1: [221, 176, 25 ], // #ddb019 golden yellow
+      2: [224, 88,  48 ], // #e05830 burnt orange
+      3: [223, 227, 114], // #dfe372 lime yellow
+      4: [128, 155, 222], // #809bde cornflower blue
+      5: [0,   255, 0  ], // bright green
+      6: [228, 76,  0  ], // #e44c00 deep orange
+      7: [112, 132, 253], // #7084fd periwinkle blue
+      8: [112, 132, 253], // reuse periwinkle for index 8
+    };
+
+    // Live colour map — updated during fade
+    const COLOURS = Object.fromEntries(
+      Object.entries(BASE_COLOURS).map(([k, [r,g,b]]) => [k, `rgb(${r},${g},${b})`])
+    );
+
+    function lerp(a, b, t) { return Math.round(a + (b - a) * t); }
+    function rgbToHex([r, g, b]) {
+      return `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+    }
+    function hexToRgb(hex) {
+      const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+      if (!m) return null;
+      const n = Number.parseInt(m[1], 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    }
+    function rgbToCss(rgb) {
+      const [r, g, b] = rgb;
+      return `rgb(${r},${g},${b})`;
+    }
+    function setRowColour(index, rgb) {
+      ROW_BASE_COLOURS[index] = rgb;
+      ROW_COLOURS[index] = rgbToCss(rgb);
+    }
+    function setColColour(index, rgb) {
+      COL_BASE_COLOURS[index] = rgb;
+      COL_COLOURS[index] = rgbToCss(rgb);
+    }
+
+    const FADE_DURATION = 2000;
+    let FADE_START_DELAY = 0;
+
+    function applyFadeFromElapsed(elapsed) {
+      if (!ENABLE_END_FADE || elapsed < FADE_START_DELAY) return;
+      const t = Math.min((elapsed - FADE_START_DELAY) / FADE_DURATION, 1);
+      const eased = 1 - Math.pow(1 - t, 3); // ease in cubic
+
+      for (const [k, [r,g,b]] of Object.entries(BASE_COLOURS)) {
+        if (Number(k) === 0) continue; // keep black
+        COLOURS[k] = `rgb(${lerp(r,255,eased)},${lerp(g,255,eased)},${lerp(b,255,eased)})`;
+      }
+      for (let i = 0; i < ROW_BASE_COLOURS.length; i++) {
+        const [r, g, b] = ROW_BASE_COLOURS[i];
+        ROW_COLOURS[i] = `rgb(${lerp(r,255,eased)},${lerp(g,255,eased)},${lerp(b,255,eased)})`;
+      }
+      for (let i = 0; i < COL_BASE_COLOURS.length; i++) {
+        const [r, g, b] = COL_BASE_COLOURS[i];
+        COL_COLOURS[i] = `rgb(${lerp(r,255,eased)},${lerp(g,255,eased)},${lerp(b,255,eased)})`;
+      }
+    }
+
+    function drawStatic() {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, W, H);
+      for (let j = 0; j < COUNT; j++) {
+        const rowIdx = ROWS.length - 1 - j;
+        const seq = ROWS[rowIdx];
+        let sx = pinkStrips[j].x;
+        for (let s = 0; s < seq.length; s++) {
+          ctx.fillStyle = seq[s] === 0 ? COLOURS[0] : ROW_COLOURS[rowIdx];
+          ctx.fillRect(sx, pinkStrips[j].y, STRIP_W, STRIP_W);
+          sx += STRIP_W;
+        }
+      }
+      for (let i = 0; i < COUNT; i++) {
+        let sy = hStrips[i].y;
+        for (let s = 0; s < COLS.length; s++) {
+          ctx.fillStyle = COLS[s][i] === 0 ? COLOURS[0] : COL_COLOURS[i];
+          ctx.fillRect(hStrips[i].x, sy, STRIP_W, STRIP_W);
+          sy += STRIP_W;
+        }
+      }
+      for (let i = 0; i < COUNT; i++) {
+        for (let j = 0; j < COUNT; j++) {
+          const overlapping =
+            hStrips[i].x >= pinkStrips[j].x &&
+            hStrips[i].x <= pinkStrips[j].x + PINK_W &&
+            pinkStrips[j].y >= hStrips[i].y &&
+            pinkStrips[j].y <= hStrips[i].y + H_STRIP_H;
+          if (!overlapping) continue;
+          if ((i + j) % 2 === 1) {
+            const rowIdx = ROWS.length - 1 - j;
+            const seq = ROWS[rowIdx];
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(hStrips[i].x, pinkStrips[j].y, STRIP_W, STRIP_W);
+            ctx.clip();
+            let sx = pinkStrips[j].x;
+            for (let s = 0; s < seq.length; s++) {
+              ctx.fillStyle = seq[s] === 0 ? COLOURS[0] : ROW_COLOURS[rowIdx];
+              ctx.fillRect(sx, pinkStrips[j].y, STRIP_W, STRIP_W);
+              sx += STRIP_W;
+            }
+            ctx.restore();
+          } else {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(hStrips[i].x, pinkStrips[j].y, STRIP_W, STRIP_W);
+            ctx.clip();
+            let sy = hStrips[i].y;
+            for (let s = 0; s < COLS.length; s++) {
+              ctx.fillStyle = COLS[s][i] === 0 ? COLOURS[0] : COL_COLOURS[i];
+              ctx.fillRect(hStrips[i].x, sy, STRIP_W, STRIP_W);
+              sy += STRIP_W;
+            }
+            ctx.restore();
+          }
+        }
+      }
+    }
+
+    const GREYS = {
+      1: '#222222',
+      2: '#555555',
+      3: '#888888',
+      4: '#bbbbbb'
+    };
+    const REDS = {
+      0: '#000000', // black
+      1: '#CC0000', // dark red
+      2: '#FF7F00', // orange
+      4: '#FFAAAA'  // light red
+    };
+    const BLUES = {
+      0: '#000000', // black
+      1: '#0000CC', // dark blue
+      2: '#FFFF00', // yellow
+      4: '#AAAAFF'  // light blue
+    };
+    const COLS = [
+      [2,1,2,1,2,1,2,1], // row 1
+      [2,1,2,1,2,1,2,1], // row 2
+      [2,0,0,1,2,1,0,1], // row 3
+      [2,1,0,1,0,1,0,1], // row 4
+      [2,1,0,0,0,1,0,1], // row 5
+      [2,1,2,0,2,0,2,1], // row 6
+      [2,1,2,1,2,1,2,1], // row 7
+      [2,1,2,1,2,1,2,1], // row 8
+    ];
+
+    const ROWS = [
+      [4,4,4,4,4,4,4,4], // row 1
+      [3,3,3,3,3,3,3,3], // row 2
+      [4,0,0,0,0,0,0,4], // row 3
+      [3,3,3,3,3,3,3,3], // row 4
+      [4,4,0,0,0,0,0,4], // row 5
+      [3,3,3,0,0,0,3,3], // row 6
+      [4,4,4,4,4,4,4,4], // row 7
+      [3,3,3,3,3,3,3,3], // row 8
+    ];
+    const COUNT = Math.min(
+      ROWS.length,
+      ...COLS.map((row) => row.length)
+    );
+    const ROW_BASE_COLOUR_INDEX = ROWS.map((row) => {
+      const firstNonZero = row.find((v) => v !== 0);
+      return firstNonZero ?? 1;
+    });
+    const ROW_BASE_COLOURS = ROW_BASE_COLOUR_INDEX.map((idx) => [...(BASE_COLOURS[idx] ?? BASE_COLOURS[1])]);
+    const ROW_COLOURS = ROW_BASE_COLOURS.map((rgb) => rgbToCss(rgb));
+    const COL_BASE_COLOUR_INDEX = Array.from({ length: COUNT }, (_, i) => {
+      for (let s = 0; s < COLS.length; s++) {
+        if (COLS[s][i] !== 0) return COLS[s][i];
+      }
+      return 1;
+    });
+    const COL_BASE_COLOURS = COL_BASE_COLOUR_INDEX.map((idx) => [...(BASE_COLOURS[idx] ?? BASE_COLOURS[1])]);
+    const COL_COLOURS = COL_BASE_COLOURS.map((rgb) => rgbToCss(rgb));
+    const ROW_DELAYS = Array.from({ length: COUNT }, (_, j) => j * STAGGER);
+    const COL_DELAYS = Array.from({ length: COUNT }, (_, i) => i * STAGGER);
+    const ROW_DELAYS_STORAGE_KEY = 'wovn.index3.rowDelays';
+    const COL_DELAYS_STORAGE_KEY = 'wovn.index3.colDelays';
+    const ROW_COLOURS_STORAGE_KEY = 'wovn.index3.rowColours';
+    const COL_COLOURS_STORAGE_KEY = 'wovn.index3.colColours';
+    const FADE_DELAY_STORAGE_KEY = 'wovn.index3.fadeDelay';
+    const SHARE_STATE_QUERY_KEY = 'state';
+    const rowDelayInputs = Array.from({ length: COUNT }, (_, j) =>
+      document.getElementById(`rowNum${j + 1}`)
+    );
+    const colDelayInputs = Array.from({ length: COUNT }, (_, i) =>
+      document.getElementById(`colNum${i + 1}`)
+    );
+    function getDefaultFadeStartDelay() {
+      const rowEnd = DURATION + Math.max(...ROW_DELAYS);
+      const colEnd = DURATION + Math.max(...COL_DELAYS);
+      return Math.max(rowEnd, colEnd);
+    }
+    function loadPersistedDelays() {
+      try {
+        const savedRowDelays = JSON.parse(localStorage.getItem(ROW_DELAYS_STORAGE_KEY) || 'null');
+        if (Array.isArray(savedRowDelays)) {
+          for (let i = 0; i < COUNT; i++) {
+            const v = Number.parseFloat(savedRowDelays[i]);
+            if (Number.isFinite(v)) ROW_DELAYS[i] = Math.max(0, v);
+          }
+        }
+        const savedColDelays = JSON.parse(localStorage.getItem(COL_DELAYS_STORAGE_KEY) || 'null');
+        if (Array.isArray(savedColDelays)) {
+          for (let i = 0; i < COUNT; i++) {
+            const v = Number.parseFloat(savedColDelays[i]);
+            if (Number.isFinite(v)) COL_DELAYS[i] = Math.max(0, v);
+          }
+        }
+      } catch (_err) {
+        // Ignore malformed localStorage content and keep defaults.
+      }
+    }
+    function persistDelays() {
+      localStorage.setItem(ROW_DELAYS_STORAGE_KEY, JSON.stringify(ROW_DELAYS));
+      localStorage.setItem(COL_DELAYS_STORAGE_KEY, JSON.stringify(COL_DELAYS));
+    }
+    function loadPersistedColours() {
+      try {
+        const savedRowColours = JSON.parse(localStorage.getItem(ROW_COLOURS_STORAGE_KEY) || 'null');
+        if (Array.isArray(savedRowColours)) {
+          for (let i = 0; i < COUNT; i++) {
+            const rgb = hexToRgb(savedRowColours[i]);
+            if (rgb) setRowColour(i, rgb);
+          }
+        }
+        const savedColColours = JSON.parse(localStorage.getItem(COL_COLOURS_STORAGE_KEY) || 'null');
+        if (Array.isArray(savedColColours)) {
+          for (let i = 0; i < COUNT; i++) {
+            const rgb = hexToRgb(savedColColours[i]);
+            if (rgb) setColColour(i, rgb);
+          }
+        }
+      } catch (_err) {
+        // Ignore malformed localStorage content and keep defaults.
+      }
+    }
+    function persistColours() {
+      localStorage.setItem(ROW_COLOURS_STORAGE_KEY, JSON.stringify(ROW_BASE_COLOURS.map(rgbToHex)));
+      localStorage.setItem(COL_COLOURS_STORAGE_KEY, JSON.stringify(COL_BASE_COLOURS.map(rgbToHex)));
+    }
+    function loadPersistedFadeDelay() {
+      const savedFadeDelay = Number.parseFloat(localStorage.getItem(FADE_DELAY_STORAGE_KEY) || '');
+      if (Number.isFinite(savedFadeDelay)) {
+        FADE_START_DELAY = Math.max(0, savedFadeDelay);
+        return true;
+      }
+      return false;
+    }
+    function persistFadeDelay() {
+      localStorage.setItem(FADE_DELAY_STORAGE_KEY, String(FADE_START_DELAY));
+    }
+    function toBase64Url(str) {
+      const bytes = new TextEncoder().encode(str);
+      let binary = '';
+      for (const b of bytes) binary += String.fromCharCode(b);
+      return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+    }
+    function fromBase64Url(encoded) {
+      const b64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4);
+      const binary = atob(padded);
+      const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
+    }
+    function buildShareState() {
+      return {
+        rd: ROW_DELAYS,
+        cd: COL_DELAYS,
+        rc: ROW_BASE_COLOURS.map(rgbToHex),
+        cc: COL_BASE_COLOURS.map(rgbToHex),
+        fd: FADE_START_DELAY
+      };
+    }
+    function encodeShareState() {
+      return toBase64Url(JSON.stringify(buildShareState()));
+    }
+    function applyShareState(state) {
+      if (!state || typeof state !== 'object') return;
+      if (Array.isArray(state.rd)) {
+        for (let i = 0; i < COUNT; i++) {
+          const v = Number.parseFloat(state.rd[i]);
+          if (Number.isFinite(v)) ROW_DELAYS[i] = Math.max(0, v);
+        }
+      }
+      if (Array.isArray(state.cd)) {
+        for (let i = 0; i < COUNT; i++) {
+          const v = Number.parseFloat(state.cd[i]);
+          if (Number.isFinite(v)) COL_DELAYS[i] = Math.max(0, v);
+        }
+      }
+      if (Array.isArray(state.rc)) {
+        for (let i = 0; i < COUNT; i++) {
+          const rgb = hexToRgb(state.rc[i]);
+          if (rgb) setRowColour(i, rgb);
+        }
+      }
+      if (Array.isArray(state.cc)) {
+        for (let i = 0; i < COUNT; i++) {
+          const rgb = hexToRgb(state.cc[i]);
+          if (rgb) setColColour(i, rgb);
+        }
+      }
+      const fd = Number.parseFloat(state.fd);
+      if (Number.isFinite(fd)) FADE_START_DELAY = Math.max(0, fd);
+    }
+    function loadShareStateFromQuery() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const encoded = params.get(SHARE_STATE_QUERY_KEY);
+        if (!encoded) return false;
+        const decoded = fromBase64Url(encoded);
+        const state = JSON.parse(decoded);
+        applyShareState(state);
+        return true;
+      } catch (_err) {
+        return false;
+      }
+    }
+    function updatePreviewLink() {
+      const encoded = encodeShareState();
+      const url = `${window.location.origin}${window.location.pathname}?${SHARE_STATE_QUERY_KEY}=${encoded}`;
+      previewLink.href = url;
+      previewLink.textContent = url;
+    }
+    loadPersistedDelays();
+    loadPersistedColours();
+    const hasPersistedFadeDelay = loadPersistedFadeDelay();
+    if (!hasPersistedFadeDelay) {
+      FADE_START_DELAY = getDefaultFadeStartDelay();
+    }
+    if (loadShareStateFromQuery()) {
+      persistDelays();
+      persistColours();
+      persistFadeDelay();
+    }
+    // Arrow key offsets — single source of truth for strip positions
+    let hOffset = H_OFFSET_BASE;
+    let vOffset = V_OFFSET_BASE;
+
+    // Grey strips — vertical bars dropping in from top
+    const hStrips = Array.from({ length: COUNT }, (_, i) => ({
+      targetX: MARGIN + hOffset + i * (STRIP_W + GAP),
+      x: MARGIN + hOffset + i * (STRIP_W + GAP),
+      y: -(H + STRIP_W)
+    }));
+    const H_STRIP_H = H - MARGIN * 2;
+    const H_STRIP_Y = MARGIN;
+
+    // Pink strips — horizontal bars at fixed y, sliding in from left
+    // Align horizontal strip stack to the same strip grid as vertical strips.
+    const PINK_BASE_TARGET = MARGIN + (COUNT - 1) * (STRIP_W + GAP);
+    const pinkStrips = Array.from({ length: COUNT }, (_, i) => ({
+      targetX: MARGIN,
+      y: PINK_BASE_TARGET + vOffset - i * (STRIP_W + GAP),
+      x: -(W + STRIP_W)
+    }));
+    const PINK_W = W - MARGIN * 2;
+
+    let rafId = null;
+    let animStart = null;
+
+    function easeOutExpo(t) {
+      return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+    }
+
+    function draw(ts) {
+      if (!animStart) animStart = ts;
+      const elapsed = ts - animStart;
+      applyFadeFromElapsed(elapsed);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, W, H);
+
+      // 1. Draw horizontal strips (bottom layer) — slide in from left
+      for (let j = 0; j < COUNT; j++) {
+        const e = elapsed - ROW_DELAYS[j];
+        pinkStrips[j].x = e <= 0
+          ? -(W + STRIP_W)
+          : -(W + STRIP_W) + (pinkStrips[j].targetX + (W + STRIP_W)) * easeOutExpo(Math.min(e / DURATION, 1));
+
+        const rowIdx = ROWS.length - 1 - j;
+        const seq = ROWS[rowIdx];
+        let sx = pinkStrips[j].x;
+        for (let s = 0; s < seq.length; s++) {
+          ctx.fillStyle = seq[s] === 0 ? COLOURS[0] : ROW_COLOURS[rowIdx];
+          ctx.fillRect(sx, pinkStrips[j].y, STRIP_W, STRIP_W);
+          sx += STRIP_W;
+        }
+      }
+
+      // 2. Draw vertical strips on top
+      for (let i = 0; i < COUNT; i++) {
+        const e = elapsed - COL_DELAYS[i];
+        hStrips[i].x = hStrips[i].targetX;
+        hStrips[i].y = e <= 0
+          ? -(H + STRIP_W)
+          : -(H + STRIP_W) + (H_STRIP_Y + (H + STRIP_W)) * easeOutExpo(Math.min(e / DURATION, 1));
+        let sy = hStrips[i].y;
+        for (let s = 0; s < COLS.length; s++) {
+          ctx.fillStyle = COLS[s][i] === 0 ? COLOURS[0] : COL_COLOURS[i];
+          ctx.fillRect(hStrips[i].x, sy, STRIP_W, STRIP_W);
+          sy += STRIP_W;
+        }
+      }
+
+      // 3. Repaint intersections for weave effect
+      for (let i = 0; i < COUNT; i++) {
+        for (let j = 0; j < COUNT; j++) {
+          const overlapping =
+            hStrips[i].x >= pinkStrips[j].x &&
+            hStrips[i].x <= pinkStrips[j].x + PINK_W &&
+            pinkStrips[j].y >= hStrips[i].y &&
+            pinkStrips[j].y <= hStrips[i].y + H_STRIP_H;
+
+          if (!overlapping) continue;
+
+          if ((i + j) % 2 === 1) {
+            // H over V — redraw horizontal strip's pattern
+            const rowIdx = ROWS.length - 1 - j;
+            const seq = ROWS[rowIdx];
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(hStrips[i].x, pinkStrips[j].y, STRIP_W, STRIP_W);
+            ctx.clip();
+            let sx = pinkStrips[j].x;
+            for (let s = 0; s < seq.length; s++) {
+              ctx.fillStyle = seq[s] === 0 ? COLOURS[0] : ROW_COLOURS[rowIdx];
+              ctx.fillRect(sx, pinkStrips[j].y, STRIP_W, STRIP_W);
+              sx += STRIP_W;
+            }
+            ctx.restore();
+          } else {
+            // V over H — redraw vertical strip's pattern
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(hStrips[i].x, pinkStrips[j].y, STRIP_W, STRIP_W);
+            ctx.clip();
+            let sy = hStrips[i].y;
+            for (let s = 0; s < COLS.length; s++) {
+              ctx.fillStyle = COLS[s][i] === 0 ? COLOURS[0] : COL_COLOURS[i];
+              ctx.fillRect(hStrips[i].x, sy, STRIP_W, STRIP_W);
+              sy += STRIP_W;
+            }
+            ctx.restore();
+          }
+        }
+      }
+
+      const rowEnd = DURATION + Math.max(...ROW_DELAYS);
+      const colEnd = DURATION + Math.max(...COL_DELAYS);
+      const mainEnd = Math.max(rowEnd, colEnd);
+      const fadeEnd = ENABLE_END_FADE ? FADE_START_DELAY + FADE_DURATION : 0;
+      const totalDuration = Math.max(mainEnd, fadeEnd);
+      if (elapsed < totalDuration) {
+        rafId = requestAnimationFrame(draw);
+      } else {
+        rafId = null;
+      }
+    }
+
+    function replay() {
+      if (rafId) cancelAnimationFrame(rafId);
+      animStart = null;
+      // Reset colours to base
+      for (const [k, [r,g,b]] of Object.entries(BASE_COLOURS)) {
+        COLOURS[k] = `rgb(${r},${g},${b})`;
+      }
+      for (let i = 0; i < ROW_BASE_COLOURS.length; i++) {
+        ROW_COLOURS[i] = rgbToCss(ROW_BASE_COLOURS[i]);
+      }
+      for (let i = 0; i < COL_BASE_COLOURS.length; i++) {
+        COL_COLOURS[i] = rgbToCss(COL_BASE_COLOURS[i]);
+      }
+      for (const s of hStrips) {
+        s.x = s.targetX;
+        s.y = -(H + STRIP_W);
+      }
+      for (const s of pinkStrips) s.x = -(W + STRIP_W);
+      rafId = requestAnimationFrame(draw);
+    }
+
+    canvas.addEventListener('click', replay);
+
+    // Arrow keys adjust strip positions in real time
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft')  hOffset -= 1;
+      if (e.key === 'ArrowRight') hOffset += 1;
+      if (e.key === 'ArrowUp')    vOffset -= 1;
+      if (e.key === 'ArrowDown')  vOffset += 1;
+      if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) {
+        e.preventDefault();
+        for (let i = 0; i < COUNT; i++) {
+          hStrips[i].targetX = MARGIN + hOffset + i * (STRIP_W + GAP);
+          hStrips[i].x = hStrips[i].targetX;
+          pinkStrips[i].y = PINK_BASE_TARGET + vOffset - i * (STRIP_W + GAP);
+        }
+        console.log('hOffset:', hOffset, 'vOffset:', vOffset);
+      }
+    });
+
+    fadeToggle.addEventListener('change', () => {
+      ENABLE_END_FADE = fadeToggle.checked;
+    });
+    fadeDelayInput.value = String(FADE_START_DELAY);
+    fadeDelayInput.addEventListener('input', () => {
+      const parsed = Number.parseFloat(fadeDelayInput.value);
+      FADE_START_DELAY = Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+      updatePreviewLink();
+    });
+    fadeDelayInput.addEventListener('change', () => {
+      const parsed = Number.parseFloat(fadeDelayInput.value);
+      FADE_START_DELAY = Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+      fadeDelayInput.value = String(FADE_START_DELAY);
+      persistFadeDelay();
+      updatePreviewLink();
+      replay();
+    });
+
+    rowDelayInputs.forEach((input, idx) => {
+      if (!input) return;
+      input.value = String(ROW_DELAYS[idx]);
+      input.addEventListener('input', () => {
+        const parsed = Number.parseFloat(input.value);
+        ROW_DELAYS[idx] = Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+        updatePreviewLink();
+      });
+      input.addEventListener('change', () => {
+        const parsed = Number.parseFloat(input.value);
+        ROW_DELAYS[idx] = Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+        input.value = String(ROW_DELAYS[idx]);
+        persistDelays();
+        updatePreviewLink();
+        replay();
+      });
+    });
+
+    colDelayInputs.forEach((input, idx) => {
+      if (!input) return;
+      input.value = String(COL_DELAYS[idx]);
+      input.addEventListener('input', () => {
+        const parsed = Number.parseFloat(input.value);
+        COL_DELAYS[idx] = Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+        updatePreviewLink();
+      });
+      input.addEventListener('change', () => {
+        const parsed = Number.parseFloat(input.value);
+        COL_DELAYS[idx] = Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+        input.value = String(COL_DELAYS[idx]);
+        persistDelays();
+        updatePreviewLink();
+        replay();
+      });
+    });
+
+    rowColorInputs.forEach((input, idx) => {
+      if (!input || idx >= COUNT) return;
+      input.value = rgbToHex(ROW_BASE_COLOURS[idx] ?? BASE_COLOURS[1]);
+      input.addEventListener('input', () => {
+        const rgb = hexToRgb(input.value);
+        if (!rgb) return;
+        setRowColour(idx, rgb);
+        updatePreviewLink();
+        if (!rafId) drawStatic();
+      });
+      input.addEventListener('change', () => {
+        const rgb = hexToRgb(input.value);
+        if (!rgb) return;
+        setRowColour(idx, rgb);
+        persistColours();
+        updatePreviewLink();
+        replay();
+      });
+    });
+
+    colColorInputs.forEach((input, idx) => {
+      if (!input || idx >= COUNT) return;
+      input.value = rgbToHex(COL_BASE_COLOURS[idx] ?? BASE_COLOURS[1]);
+      input.addEventListener('input', () => {
+        const rgb = hexToRgb(input.value);
+        if (!rgb) return;
+        setColColour(idx, rgb);
+        updatePreviewLink();
+        if (!rafId) drawStatic();
+      });
+      input.addEventListener('change', () => {
+        const rgb = hexToRgb(input.value);
+        if (!rgb) return;
+        setColColour(idx, rgb);
+        persistColours();
+        updatePreviewLink();
+        replay();
+      });
+    });
+
+    updatePreviewLink();
+    replay();
+
+    // --- MediaRecorder ---
+    const recordBtn = document.getElementById('recordBtn');
+    let mediaRecorder = null;
+    let recordedChunks = [];
+
+    recordBtn.addEventListener('click', () => {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      } else {
+        recordedChunks = [];
+        const stream = canvas.captureStream(60);
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'animation.webm';
+          a.click();
+          URL.revokeObjectURL(url);
+          recordBtn.textContent = '⏺ Record';
+          recordBtn.classList.remove('recording');
+        };
+        mediaRecorder.start();
+        recordBtn.textContent = '⏹ Stop & Save';
+        recordBtn.classList.add('recording');
+      }
+    });
+  </script>
+</body>
+</html>
