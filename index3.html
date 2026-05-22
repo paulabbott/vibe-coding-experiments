@@ -137,6 +137,10 @@
         </div>
       </div>
       <label class="control-item">
+        <span>Duration (ms)</span>
+        <input id="durationInput" type="number" min="1" step="10" value="1800" />
+      </label>
+      <label class="control-item">
         <input id="fadeToggle" type="checkbox" checked />
         <span>Fade to white</span>
         <input id="fadeDelay" type="number" min="0" step="10" value="0" />
@@ -146,6 +150,7 @@
   </div>
   <script>
     const canvas = document.getElementById('c');
+    const durationInput = document.getElementById('durationInput');
     const fadeToggle = document.getElementById('fadeToggle');
     const fadeDelayInput = document.getElementById('fadeDelay');
     const previewLink = document.getElementById('previewLink');
@@ -160,7 +165,7 @@
     const H = canvas.height;
     const STRIP_W = 20;
     const GAP = 0;
-    const DURATION = 1800;
+    let DURATION = 1800;
     const STAGGER = 240;
     const MARGIN = 30;
     let ENABLE_END_FADE = true;
@@ -353,6 +358,7 @@
     const COL_DELAYS_STORAGE_KEY = 'vibe.index3.colDelays';
     const ROW_COLOURS_STORAGE_KEY = 'vibe.index3.rowColours';
     const COL_COLOURS_STORAGE_KEY = 'vibe.index3.colColours';
+    const DURATION_STORAGE_KEY = 'vibe.index3.duration';
     const FADE_DELAY_STORAGE_KEY = 'vibe.index3.fadeDelay';
     const SHARE_STATE_QUERY_KEY = 'state';
     const rowDelayInputs = Array.from({ length: COUNT }, (_, j) =>
@@ -414,6 +420,17 @@
       localStorage.setItem(ROW_COLOURS_STORAGE_KEY, JSON.stringify(ROW_BASE_COLOURS.map(rgbToHex)));
       localStorage.setItem(COL_COLOURS_STORAGE_KEY, JSON.stringify(COL_BASE_COLOURS.map(rgbToHex)));
     }
+    function loadPersistedDuration() {
+      const savedDuration = Number.parseFloat(localStorage.getItem(DURATION_STORAGE_KEY) || '');
+      if (Number.isFinite(savedDuration) && savedDuration > 0) {
+        DURATION = savedDuration;
+        return true;
+      }
+      return false;
+    }
+    function persistDuration() {
+      localStorage.setItem(DURATION_STORAGE_KEY, String(DURATION));
+    }
     function loadPersistedFadeDelay() {
       const savedFadeDelay = Number.parseFloat(localStorage.getItem(FADE_DELAY_STORAGE_KEY) || '');
       if (Number.isFinite(savedFadeDelay)) {
@@ -444,7 +461,8 @@
         cd: COL_DELAYS,
         rc: ROW_BASE_COLOURS.map(rgbToHex),
         cc: COL_BASE_COLOURS.map(rgbToHex),
-        fd: FADE_START_DELAY
+        fd: FADE_START_DELAY,
+        du: DURATION
       };
     }
     function encodeShareState() {
@@ -478,6 +496,8 @@
       }
       const fd = Number.parseFloat(state.fd);
       if (Number.isFinite(fd)) FADE_START_DELAY = Math.max(0, fd);
+      const du = Number.parseFloat(state.du);
+      if (Number.isFinite(du) && du > 0) DURATION = du;
     }
     function loadShareStateFromQuery() {
       try {
@@ -500,6 +520,7 @@
     }
     loadPersistedDelays();
     loadPersistedColours();
+    loadPersistedDuration();
     const hasPersistedFadeDelay = loadPersistedFadeDelay();
     if (!hasPersistedFadeDelay) {
       FADE_START_DELAY = getDefaultFadeStartDelay();
@@ -507,6 +528,7 @@
     if (loadShareStateFromQuery()) {
       persistDelays();
       persistColours();
+      persistDuration();
       persistFadeDelay();
     }
     // Arrow key offsets — single source of truth for strip positions
@@ -672,6 +694,21 @@
         }
         console.log('hOffset:', hOffset, 'vOffset:', vOffset);
       }
+    });
+
+    durationInput.value = String(DURATION);
+    durationInput.addEventListener('input', () => {
+      const parsed = Number.parseFloat(durationInput.value);
+      DURATION = Number.isFinite(parsed) && parsed > 0 ? parsed : DURATION;
+      updatePreviewLink();
+    });
+    durationInput.addEventListener('change', () => {
+      const parsed = Number.parseFloat(durationInput.value);
+      DURATION = Number.isFinite(parsed) && parsed > 0 ? parsed : 1800;
+      durationInput.value = String(DURATION);
+      persistDuration();
+      updatePreviewLink();
+      replay();
     });
 
     fadeToggle.addEventListener('change', () => {
